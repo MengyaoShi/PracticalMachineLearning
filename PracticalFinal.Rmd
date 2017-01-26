@@ -91,4 +91,5 @@ testing[,ncol(testing)+1]<-test_result
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Reference: data from this website http://groupware.les.inf.puc-rio.br/har
+
