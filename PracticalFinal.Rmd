@@ -1,0 +1,94 @@
+---
+title: "Practical Machine Learning Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem Description
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+## Solution
+I first removed columns containing 'NA' in it. Random seed is set to 123, and split TrainingAndCrossValidation(train_and_cv) using createDataPartition method by classe, 0.6 of all trainingAndCrossValidation set goes to training, and the result goes to validation set. Therefore training and validation sets contains data of all different A B C D E classe samples. 
+
+
+```{r}
+library(caret)
+library(randomForest)
+library(ElemStatLearn)
+file1<-download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv', destfile = 'file1.csv')
+train_and_cv<-read.csv('file1.csv')
+file2<-download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv', destfile='file2.csv')
+testing<-read.csv('file2.csv')
+dismiss<-c(12:36,50:59,69:83,87:101,103:112, 125:139,141:150)
+train_and_cv=train_and_cv[,-dismiss]
+testing=testing[,-dismiss]
+testing$problem_id<-NULL
+testing[,'classe']<-'A'
+
+all<-rbind( testing, train_and_cv)
+
+all<-all[,colSums(is.na(all))==0]
+set.seed(123)
+testing<-all[1:20,]
+train_and_cv<-all[21:nrow(all),]
+
+inTrain<-createDataPartition(y=train_and_cv$classe,p=0.6,list=FALSE)
+training<-train_and_cv[inTrain,]
+validation<-train_and_cv[-inTrain,]
+
+```
+
+## RandomForest and performance
+
+Then Random Forest method is applied to fit classe against all other parameters but timestamps on training set, since timestamps are obviously uncorrelated to problem we study. And I made two plots to help me understand performance: 
+
+1. OOB error rate VS. tree numbers with error rate being log scaled. And you can notice, OOB error rate decrease dramastically with tree number goes up, until a cutoff about 100. 
+
+2. Second plot I would say very helpful is variable importance rank, so we can see which variables play a more important role. 
+
+With these two piece of information I study how to improve accuracy of applying random forest method on validation set, and decrease descrepancy between the two. Validation accuracy is always 1. However when I decrease tree number, together with number of predictors, and only keep limited number of predictors according to their rank, I get a smaller descrepancy between error rate of validation set and training set. But notice this descrepancy was not big even before, you are welcome to have a look at confusion matrix off diagonal terms below. So I improved overfitting situation. I tried to decrease number of predictors even more, and all the way down to most important predictor, fluctuation of "OOB error" VS "number of trees" plot is large. So I chose a moderate number of predictors and number of trees in the end.
+
+And when I submitted final 20 test cases prediction results, evey prediction was correct.  
+
+
+
+```{r}
+set.seed(876)
+modelFit<-randomForest(factor(classe)~.-classe-X-raw_timestamp_part_1-raw_timestamp_part_2-cvtd_timestamp,data=training,ntree=500)
+
+layout(matrix(c(1,2),nrow=1),
+       width=c(4,1)) 
+par(mar=c(5,4,4,0)) #No margin on the right side
+plot(modelFit, log="y")
+par(mar=c(5,0,4,2)) #No margin on the left side
+plot(c(0,1),type="n", axes=F, xlab="", ylab="")
+legend("top", colnames(modelFit$err.rate),col=1:6,cex=0.8,fill=1:6)
+
+modelFit<-randomForest(factor(classe)~num_window+roll_belt+yaw_belt+pitch_forearm+magnet_dumbbell_z+pitch_belt+magnet_dumbbell_y+roll_forearm,data=training,ntree=100, proximity=TRUE)
+
+varImpPlot(modelFit)
+
+#modelFit<-randomForest(factor(classe)~num_window,data=training,ntree=100)
+
+result_train<-predict(modelFit,training)
+
+
+result_predict<-predict(modelFit,validation)
+
+validation[,(ncol(validation)+1)]<-result_predict
+print("******************************************************************************")
+print(confusionMatrix(result_predict,validation$classe))
+print("******************************************************************************")
+print(confusionMatrix(predict(modelFit,training),training$classe))
+
+
+test_result<-predict(modelFit,testing)
+testing[,ncol(testing)+1]<-test_result
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
