@@ -50,7 +50,11 @@ Then Random Forest method is applied to fit classe against all other parameters 
 
 2. Second plot I would say very helpful is variable importance rank, so we can see which variables play a more important role. 
 
-With these two piece of information I study how to improve accuracy of applying random forest method on validation set, and decrease descrepancy between the two. Validation accuracy is always 1. However when I decrease tree number, together with number of predictors, and only keep limited number of predictors according to their rank, I get a smaller descrepancy between error rate of validation set and training set. But notice this descrepancy was not big even before, you are welcome to have a look at confusion matrix off diagonal terms below. So I improved overfitting situation. I tried to decrease number of predictors even more, and all the way down to most important predictor, fluctuation of "OOB error" VS "number of trees" plot is large. So I chose a moderate number of predictors and number of trees in the end.
+With these two piece of information I study how to improve accuracy of applying random forest method on validation set, and decrease descrepancy between the two. training accuracy is always 1 and validation accuracy improve from .997 to .998. This happend when I decrease tree number, together with number of predictors, and only keep limited number of predictors according to their rank, I get a smaller descrepancy between error rate of validation set and training set. But notice this descrepancy was not big even before, you are welcome to have a look at confusion matrix off diagonal terms below. So I improved overfitting situation. I tried to decrease number of predictors even more, and all the way down to most important predictor, fluctuation of "OOB error" VS "number of trees" plot is large. So I chose a moderate number of predictors and number of trees in the end.
+
+Out of Sample error in conclusion improved from .002 to .001, I got the estimation by choosing number of tress=100, and with all predictors involved(but timestmaps of course) just look from first plot, it is smaller than e-02*0.5.
+
+And I verified by seeing the confusion matrix below, for validation set.
 
 And when I submitted final 20 test cases prediction results, evey prediction was correct.  
 
